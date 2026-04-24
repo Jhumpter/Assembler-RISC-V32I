@@ -16,4 +16,23 @@ def Rinst (type, res, arg1, arg2):
         return "0000000"+arg2+arg1+"001"+res+"0110011"
     elif type == "srl":
         return "0000000"+arg2+arg1+"101"+res+"0110011"
-    
+
+def Iinst (type, res, arg1, imm):
+    #imm[11:0]/rs1/funct3/rd/opcode
+    if type == "lw":
+        return imm+arg1+"010"+res+"0000011"
+    elif type == "addi":
+        return imm+arg1+"000"+res+"0010011"
+    elif type == "jalr":
+        return imm+arg1+"000"+res+"1100111"
+    elif type == "slti":
+        return imm+arg1+"010"+res+"0010011"
+    elif type == "andi":
+        return imm+arg1+"111"+res+"0010011"
+    elif type == "ori":
+        return imm+arg1+"110"+res+"0010011"
+    elif type == "xori":
+        return imm+arg1+"100"+res+"0010011"
+    elif type == "lhu":
+        return imm+arg1+"101"+res+"0000011"
+
