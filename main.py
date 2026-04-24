@@ -47,3 +47,15 @@ def Uinst (type, res, imm):
         return imm+res+"0110111"
     elif type == "auipc":
         return imm+res+"0010111"
+
+def Jinst (type, res, imm):
+    #imm[20|10:1|11|19:12]/rd/opcode
+    if type == "jal":
+        return imm+res+"1101111"
+    
+def Binst (type, arg1, arg2, imm):
+    #imm[12|10:5]/rs2/rs1/funct3/imm[4:1|11]/opcode
+    if type == "beq":
+        return imm[12]+imm[10:5]+arg2+arg1+"000"+imm[4:1]+imm[11]+"1100011"
+    elif type == "bne":
+        return imm[12]+imm[10:5]+arg2+arg1+"001"+imm[4:1]+imm[11]+"1100011"
