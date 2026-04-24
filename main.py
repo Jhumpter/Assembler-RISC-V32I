@@ -78,7 +78,6 @@ def u_inst (type, res, imm):
 
 def j_inst (type, res, imm):
     #imm[20|10:1|11|19:12]/rd/opcode
-    #Na instrução tipo J vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
 
     imm = to_bin(int(imm), 21)
     if type == "jal":
@@ -93,10 +92,9 @@ def b_inst (type, arg1, arg2, imm):
     elif type == "bne":
         return imm[0]+imm[2:8]+arg2+arg1+"001"+imm[8:12]+imm[1]+"1100011"
 
-#Será necessário avaliar a base do número fornecido
-
 #Testing
 
+"""
 #R-type
 inst = "add t0, s0, s1"
 inst = inst.replace(",", " ")
@@ -141,7 +139,6 @@ inst = b_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3]
 inst = hex(int(inst, 2))
 print(inst)
 
-
 #U-type
 inst = "lui t0, 74565"
 inst = inst.replace(",", " ")
@@ -149,4 +146,12 @@ inst = inst.split()
 inst = u_inst(inst[0], reg_translator(inst[1]), inst[2])
 inst = hex(int(inst, 2))
 print(inst)
+"""
+
+#To-do:
+
+#Criar função para verificar o tipo da instrução e chamar a função correspondente
+#Implementar a leitura de um arquivo .asm e a escrita de um arquivo .hex
+#Será necessário avaliar a base do número fornecido
+#Vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
 
