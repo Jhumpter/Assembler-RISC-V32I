@@ -81,7 +81,6 @@ def j_inst (type, res, imm):
     #Na instrução tipo J vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
 
     imm = to_bin(int(imm), 21)
-    print(imm)
     if type == "jal":
         return imm[0]+imm[10:20]+imm[9]+imm[1:9]+res+"1101111"
     
@@ -97,7 +96,23 @@ def b_inst (type, arg1, arg2, imm):
 #Será necessário avaliar a base do número fornecido
 
 #Testing
-""""
+
+#R-type
+inst = "add t0, s0, s1"
+inst = inst.replace(",", " ")
+inst = inst.split()
+inst = r_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), reg_translator(inst[3]))
+inst = hex(int(inst, 2))
+print(inst)
+
+#I-type
+inst = "addi t0,s0,255"
+inst = inst.replace(",", " ")
+inst = inst.split()
+inst = i_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
+inst = hex(int(inst, 2))
+print(inst)
+
 #S-type
 inst = "sw s0,4(s1)"
 inst = inst.replace(",", " ")
@@ -125,7 +140,7 @@ inst = inst.split()
 inst = b_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
 inst = hex(int(inst, 2))
 print(inst)
-"""
+
 
 #U-type
 inst = "lui t0, 74565"
