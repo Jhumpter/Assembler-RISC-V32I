@@ -40,3 +40,10 @@ def Sinst (type, arg1, arg2, imm):
     #imm[11:5]/rs2/rs1/funct3/imm[4:0]/opcode
     if type == "sw":
         return imm[11:5]+arg2+arg1+"010"+imm+"0100011"
+    
+def Uinst (type, res, imm):
+    #imm[31:12]/rd/opcode
+    if type == "lui":
+        return imm+res+"0110111"
+    elif type == "auipc":
+        return imm+res+"0010111"
