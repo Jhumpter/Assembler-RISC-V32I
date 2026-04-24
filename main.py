@@ -73,6 +73,15 @@ def reg_translator(reg):
         else:
             raise ValueError("Invalid register name: " + reg)
 
+def to_bin(num, bits):
+    #Calcula o complemento de 2 para números negativos e retorna a representação binária de num com o número de bits especificado
+    if num >=0:
+        return bin(num)[2:].zfill(bits)
+    elif num < 0:
+        return bin((1 << bits) + num)[2:]
+    else:
+        raise ValueError("Invalid number: " + str(num))
+
 def r_inst (type, res, arg1, arg2):
     #funct7/rs2/rs1/funct3/rd/opcode
     if type == "add":
@@ -94,6 +103,7 @@ def r_inst (type, res, arg1, arg2):
 
 def i_inst (type, res, arg1, imm):
     #imm[11:0]/rs1/funct3/rd/opcode
+    imm = to_bin(int(imm), 12)
     if type == "lw":
         return imm+arg1+"010"+res+"0000011"
     elif type == "addi":
@@ -135,12 +145,14 @@ def b_inst (type, arg1, arg2, imm):
     elif type == "bne":
         return imm[12]+imm[10:5]+arg2+arg1+"001"+imm[4:1]+imm[11]+"1100011"
 
-"""
-Testing
 
-inst = "add t0, s0, s1"
+#Testing
+
+inst = "addi t0,s0,255"
 inst = inst.replace(",", " ")
 inst = inst.split()
-inst = r_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), reg_translator(inst[3]))
+inst = i_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
 inst = hex(int(inst, 2))
-print(inst)"""
+print(inst)
+
+
