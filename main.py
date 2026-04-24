@@ -36,3 +36,7 @@ def Iinst (type, res, arg1, imm):
     elif type == "lhu":
         return imm+arg1+"101"+res+"0000011"
 
+def Sinst (type, arg1, arg2, imm):
+    #imm[11:5]/rs2/rs1/funct3/imm[4:0]/opcode
+    if type == "sw":
+        return imm[11:5]+arg2+arg1+"010"+imm+"0100011"
