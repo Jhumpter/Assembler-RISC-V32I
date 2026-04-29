@@ -13,6 +13,10 @@ def reg_translator(reg):
     else:        
         raise ValueError("Invalid register name: " + reg)
 
+def to_hex(inst):
+    #Passa o número binário para hexadecimal com 8 dígitos
+    return "0x"+hex(int(inst, 2))[2:].zfill(8)
+
 def to_bin(num, bits):
     #Calcula o complemento de 2 para números negativos e retorna a representação binária de num com o número de bits especificado
     if num >=0:
@@ -93,65 +97,8 @@ def b_inst (type, arg1, arg2, imm):
         return imm[0]+imm[2:8]+arg2+arg1+"001"+imm[8:12]+imm[1]+"1100011"
 
 
-#Testing
-
-"""
-#R-type
-inst = "add t0, s0, s1"
-inst = inst.replace(",", " ")
-inst = inst.split()
-inst = r_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), reg_translator(inst[3]))
-inst = hex(int(inst, 2))
-print(inst)
-
-#I-type
-inst = "addi t0,s0,255"
-inst = inst.replace(",", " ")
-inst = inst.split()
-inst = i_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
-inst = hex(int(inst, 2))
-print(inst)
-
-#S-type
-inst = "sw s0,4(s1)"
-inst = inst.replace(",", " ")
-inst = inst.replace("(", " ")
-inst = inst.replace(")", " ")
-inst = inst.split()
-inst = s_inst(inst[0], reg_translator(inst[3]), reg_translator(inst[1]), inst[2])
-inst = hex(int(inst, 2))
-print(inst)
-
-#J-type
-#Supondo que o endereço de "Label:" seja 2 linhas atrás de PC
-inst = "jal ra, -8"
-inst = inst.replace(",", " ")
-inst = inst.split()
-inst = j_inst(inst[0], reg_translator(inst[1]), inst[2])
-inst = hex(int(inst, 2))
-print(inst)
-
-#B-type
-#Supondo que o endereço de "Label:" seja 3 linhas atrás de PC
-inst = "beq t0,t1,-12"
-inst = inst.replace(",", " ")
-inst = inst.split()
-inst = b_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
-inst = hex(int(inst, 2))
-print(inst)
-
-#U-type
-inst = "lui t0, 74565"
-inst = inst.replace(",", " ")
-inst = inst.split()
-inst = u_inst(inst[0], reg_translator(inst[1]), inst[2])
-inst = hex(int(inst, 2))
-print(inst)
-"""
-
 #To-do:
 
 #Criar função para verificar o tipo da instrução e chamar a função correspondente
 #Implementar a leitura de um arquivo .asm e a escrita de um arquivo .hex
 #Vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
-
