@@ -28,6 +28,9 @@ def to_bin(num, bits):
 
 def r_inst (type, res, arg1, arg2):
     #funct7/rs2/rs1/funct3/rd/opcode
+    arg1 = reg_translator(arg1)
+    arg2 = reg_translator(arg2)
+    res = reg_translator(res)
     if type == "add":
         return to_hex("0000000"+arg2+arg1+"000"+res+"0110011")
     elif type == "sub":
@@ -47,7 +50,14 @@ def r_inst (type, res, arg1, arg2):
 
 def i_inst (type, res, arg1, imm):
     #imm[11:0]/rs1/funct3/rd/opcode
-    imm = to_bin(int(imm), 12)
+    if type == "lw" or type == "lhu":
+        arg1, imm = imm, arg1
+        arg1 = reg_translator(arg1)
+        imm = to_bin(int(imm), 12)
+    else:
+        arg1 = reg_translator(arg1)
+        imm = to_bin(int(imm), 12)
+    res = reg_translator(res) 
     if type == "lw":
         return to_hex(imm+arg1+"010"+res+"0000011")
     elif type == "addi":
@@ -68,19 +78,22 @@ def i_inst (type, res, arg1, imm):
 def s_inst (type, arg2, imm, arg1):
     #imm[11:5]/rs2/rs1/funct3/imm[4:0]/opcode
     imm = to_bin(int(imm,0), 12)
+    arg1 = reg_translator(arg1)
+    arg2 = reg_translator(arg2)
     if type == "sw":
-        return to_hex(imm[:8]+arg2+arg1+"010"+imm[7:]+"0100011")
+        return to_hex(imm[:7]+arg2+arg1+"010"+imm[7:]+"0100011")
 
 def j_inst (type, res, imm):
     #imm[20|10:1|11|19:12]/rd/opcode
-
+    res = reg_translator(res)
     imm = to_bin(int(imm,0), 21)
     if type == "jal":
         return to_hex(imm[0]+imm[10:20]+imm[9]+imm[1:9]+res+"1101111")
     
 def b_inst (type, arg1, arg2, imm):
     #imm[12|10:5]/rs2/rs1/funct3/imm[4:1|11]/opcode
-
+    arg1 = reg_translator(arg1)
+    arg2 = reg_translator(arg2)
     imm = to_bin(int(imm,0), 13)
     if type == "beq":
         return to_hex(imm[0]+imm[2:8]+arg2+arg1+"000"+imm[8:12]+imm[1]+"1100011")
@@ -89,7 +102,7 @@ def b_inst (type, arg1, arg2, imm):
 
 def u_inst (type, res, imm):
     #imm[31:12]/rd/opcode
-
+    res = reg_translator(res)
     imm = to_bin(int(imm,0), 20)
     if type == "lui":
         return to_hex(imm+res+"0110111")
@@ -113,26 +126,31 @@ def inst_parser(inst):
     b_type = ["beq", "bne"]
 
     if inst[0] in r_type:
-        return r_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), reg_translator(inst[3]))
+        return r_inst(inst[0], inst[1], inst[2], inst[3])
     elif inst[0] in i_type:
-        return i_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
+        return i_inst(inst[0], inst[1], inst[2], inst[3])
     elif inst[0] in s_type:
-        return s_inst(inst[0], reg_translator(inst[1]), inst[2], reg_translator(inst[3]))
+        return s_inst(inst[0], inst[1], inst[2], inst[3])
     elif inst[0] in j_type:
-        return j_inst(inst[0], reg_translator(inst[1]), inst[2])
+        if len(inst) == 2:
+            inst.insert(1, "ra")
+        return j_inst(inst[0], inst[1], inst[2])
     elif inst[0] in b_type:
-        return b_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
+        return b_inst(inst[0], inst[1], inst[2], inst[3])
     elif inst[0] in u_type:
-        return u_inst(inst[0], reg_translator(inst[1]), inst[2])
+        return u_inst(inst[0], inst[1], inst[2])
     else:
         raise ValueError("Invalid instruction type: " + inst[0])
 
-entry = input("Enter a instruction: ")
-try:
-    print(inst_parser(entry))
-except ValueError as e:
-    print(e)
-
+'''
+entry = input("Enter a instruction (0 to exit): ")
+while entry != "0":
+    try:
+        print(inst_parser(entry))
+    except ValueError as e:
+        print(e)
+    entry = input("Enter a instruction (0 to exit): ")
+'''
 
 #To-do:
 
@@ -140,3 +158,4 @@ except ValueError as e:
 #Vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
 #Fazer interface
 #Separação entre os campos .text e .data
+#Se jal não tiver um registrador, usar ra por padrão

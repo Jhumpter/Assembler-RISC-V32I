@@ -23,6 +23,12 @@ class TestMain(unittest.TestCase):
         inst = inst_parser(inst)
         self.assertEqual(inst, "0xff9ff0ef")
 
+    def test_j_inst(self):
+        #Supondo que o endereço de "Label:" seja 3 linhas a frente de PC
+        inst = "jal, 12"
+        inst = inst_parser(inst)
+        self.assertEqual(inst, "0x00c000ef")
+
     def test_b_inst(self):
         #Supondo que o endereço de "Label:" seja 3 linhas atrás de PC
         inst = "beq t0,t1,-12"
@@ -33,6 +39,21 @@ class TestMain(unittest.TestCase):
         inst = "lui t0, 74565"
         inst = inst_parser(inst)
         self.assertEqual(inst, "0x123452b7")
+
+    def test1(self):
+        inst = "lw t2, 0(t1)"
+        inst = inst_parser(inst)
+        self.assertEqual(inst, "0x00032383")
+
+    def test2(self):
+        inst = "sw t2, 32(t1)"
+        inst = inst_parser(inst)
+        self.assertEqual(inst, "0x02732023")
+
+    def test3(self):
+        inst = "lhu t5, 32(t1)"
+        inst = inst_parser(inst)
+        self.assertEqual(inst, "0x02035f03")
 
 if __name__ == '__main__':
     unittest.main()
