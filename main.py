@@ -29,76 +29,114 @@ def to_bin(num, bits):
 def r_inst (type, res, arg1, arg2):
     #funct7/rs2/rs1/funct3/rd/opcode
     if type == "add":
-        return "0000000"+arg2+arg1+"000"+res+"0110011"
+        return to_hex("0000000"+arg2+arg1+"000"+res+"0110011")
     elif type == "sub":
-        return "0100000"+arg2+arg1+"000"+res+"0110011"
+        return to_hex("0100000"+arg2+arg1+"000"+res+"0110011")
     elif type == "and":
-        return "0000000"+arg2+arg1+"111"+res+"0110011"
+        return to_hex("0000000"+arg2+arg1+"111"+res+"0110011")
     elif type == "or":
-        return "0000000"+arg2+arg1+"110"+res+"0110011"
+        return to_hex("0000000"+arg2+arg1+"110"+res+"0110011")
     elif type == "xor":
-        return "0000000"+arg2+arg1+"100"+res+"0110011"
+        return to_hex("0000000"+arg2+arg1+"100"+res+"0110011")
     elif type == "slt":
-        return "0000000"+arg2+arg1+"010"+res+"0110011"
+        return to_hex("0000000"+arg2+arg1+"010"+res+"0110011")
     elif type == "sll":
-        return "0000000"+arg2+arg1+"001"+res+"0110011"
+        return to_hex("0000000"+arg2+arg1+"001"+res+"0110011")
     elif type == "srl":
-        return "0000000"+arg2+arg1+"101"+res+"0110011"
+        return to_hex("0000000"+arg2+arg1+"101"+res+"0110011")
 
 def i_inst (type, res, arg1, imm):
     #imm[11:0]/rs1/funct3/rd/opcode
     imm = to_bin(int(imm), 12)
     if type == "lw":
-        return imm+arg1+"010"+res+"0000011"
+        return to_hex(imm+arg1+"010"+res+"0000011")
     elif type == "addi":
-        return imm+arg1+"000"+res+"0010011"
+        return to_hex(imm+arg1+"000"+res+"0010011")
     elif type == "jalr":
-        return imm+arg1+"000"+res+"1100111"
+        return to_hex(imm+arg1+"000"+res+"1100111")
     elif type == "slti":
-        return imm+arg1+"010"+res+"0010011"
+        return to_hex(imm+arg1+"010"+res+"0010011")
     elif type == "andi":
-        return imm+arg1+"111"+res+"0010011"
+        return to_hex(imm+arg1+"111"+res+"0010011")
     elif type == "ori":
-        return imm+arg1+"110"+res+"0010011"
+        return to_hex(imm+arg1+"110"+res+"0010011")
     elif type == "xori":
-        return imm+arg1+"100"+res+"0010011"
+        return to_hex(imm+arg1+"100"+res+"0010011")
     elif type == "lhu":
-        return imm+arg1+"101"+res+"0000011"
+        return to_hex(imm+arg1+"101"+res+"0000011")
 
-def s_inst (type, arg1, arg2, imm):
+def s_inst (type, arg2, imm, arg1):
     #imm[11:5]/rs2/rs1/funct3/imm[4:0]/opcode
     imm = to_bin(int(imm,0), 12)
     if type == "sw":
-        return imm[:8]+arg2+arg1+"010"+imm[7:]+"0100011"
-
-def u_inst (type, res, imm):
-    #imm[31:12]/rd/opcode
-
-    imm = to_bin(int(imm,0), 20)
-    if type == "lui":
-        return imm+res+"0110111"
-    elif type == "auipc":
-        return imm+res+"0010111"
+        return to_hex(imm[:8]+arg2+arg1+"010"+imm[7:]+"0100011")
 
 def j_inst (type, res, imm):
     #imm[20|10:1|11|19:12]/rd/opcode
 
     imm = to_bin(int(imm,0), 21)
     if type == "jal":
-        return imm[0]+imm[10:20]+imm[9]+imm[1:9]+res+"1101111"
+        return to_hex(imm[0]+imm[10:20]+imm[9]+imm[1:9]+res+"1101111")
     
 def b_inst (type, arg1, arg2, imm):
     #imm[12|10:5]/rs2/rs1/funct3/imm[4:1|11]/opcode
 
     imm = to_bin(int(imm,0), 13)
     if type == "beq":
-        return imm[0]+imm[2:8]+arg2+arg1+"000"+imm[8:12]+imm[1]+"1100011"
+        return to_hex(imm[0]+imm[2:8]+arg2+arg1+"000"+imm[8:12]+imm[1]+"1100011")
     elif type == "bne":
-        return imm[0]+imm[2:8]+arg2+arg1+"001"+imm[8:12]+imm[1]+"1100011"
+        return to_hex(imm[0]+imm[2:8]+arg2+arg1+"001"+imm[8:12]+imm[1]+"1100011")
+
+def u_inst (type, res, imm):
+    #imm[31:12]/rd/opcode
+
+    imm = to_bin(int(imm,0), 20)
+    if type == "lui":
+        return to_hex(imm+res+"0110111")
+    elif type == "auipc":
+        return to_hex(imm+res+"0010111")
+
+def inst_splitter(inst):
+    inst = inst.replace(",", " ")
+    inst = inst.replace("(", " ")
+    inst = inst.replace(")", " ")
+    return inst.split()
+
+def inst_parser(inst):
+    inst = inst_splitter(inst)
+
+    r_type = ["add", "sub", "and", "or", "xor", "slt", "sll", "srl"]
+    i_type = ["lw", "addi", "jalr", "slti", "andi", "ori", "xori", "lhu"]
+    s_type = ["sw"]
+    u_type = ["lui", "auipc"]
+    j_type = ["jal"]
+    b_type = ["beq", "bne"]
+
+    if inst[0] in r_type:
+        return r_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), reg_translator(inst[3]))
+    elif inst[0] in i_type:
+        return i_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
+    elif inst[0] in s_type:
+        return s_inst(inst[0], reg_translator(inst[1]), inst[2], reg_translator(inst[3]))
+    elif inst[0] in j_type:
+        return j_inst(inst[0], reg_translator(inst[1]), inst[2])
+    elif inst[0] in b_type:
+        return b_inst(inst[0], reg_translator(inst[1]), reg_translator(inst[2]), inst[3])
+    elif inst[0] in u_type:
+        return u_inst(inst[0], reg_translator(inst[1]), inst[2])
+    else:
+        raise ValueError("Invalid instruction type: " + inst[0])
+
+entry = input("Enter a instruction: ")
+try:
+    print(inst_parser(entry))
+except ValueError as e:
+    print(e)
 
 
 #To-do:
 
-#Criar função para verificar o tipo da instrução e chamar a função correspondente
-#Implementar a leitura de um arquivo .asm e a escrita de um arquivo .hex
+#Implementar a leitura de um arquivo .asm e a escrita de um arquivo .mif
 #Vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
+#Fazer interface
+#Separação entre os campos .text e .data
