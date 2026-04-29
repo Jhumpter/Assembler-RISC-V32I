@@ -18,19 +18,19 @@ class TestMain(unittest.TestCase):
         self.assertEqual(inst, "0x0084a223")
 
     def test_j_inst(self):
-        #Supondo que o endereço de "Label:" seja 2 linhas atrás de PC
+        #Supondo que o endereço de "Label:" seja 2 linhas atrás de PC (L*4)
         inst = "jal ra, -8"
         inst = inst_parser(inst)
         self.assertEqual(inst, "0xff9ff0ef")
 
     def test_j_inst(self):
-        #Supondo que o endereço de "Label:" seja 3 linhas a frente de PC
+        #Supondo que o endereço de "Label:" seja 3 linhas a frente de PC (L*4)
         inst = "jal, 12"
         inst = inst_parser(inst)
         self.assertEqual(inst, "0x00c000ef")
 
     def test_b_inst(self):
-        #Supondo que o endereço de "Label:" seja 3 linhas atrás de PC
+        #Supondo que o endereço de "Label:" seja 3 linhas atrás de PC (L*4)
         inst = "beq t0,t1,-12"
         inst = inst_parser(inst)
         self.assertEqual(inst, "0xfe628ae3")

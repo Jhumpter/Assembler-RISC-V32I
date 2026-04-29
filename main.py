@@ -158,4 +158,4 @@ while entry != "0":
 #Vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
 #Fazer interface
 #Separação entre os campos .text e .data
-#Se jal não tiver um registrador, usar ra por padrão
+#Como que faz o assemble do .data?
