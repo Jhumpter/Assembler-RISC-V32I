@@ -174,29 +174,6 @@ def data_parser(data):
     remainder = int("".join(memory), 16)
     output.append(memory_register(to_hex(to_bin(remainder, 32))))
     return output
-    """
-    if line[1] == ".word":
-            for i in range(2, len(line)):
-                if len(memory) != 0:
-                    memory_register(memory)
-                memory = memory_register(to_hex(to_bin(int(line[i]), 32)))
-        elif line[1] == ".half":
-            for i in range(2, len(line)):
-                if len(memory) > 6:
-                    memory = memory_register(memory)
-                if len(memory) == 0:
-                    memory = list(to_hex(to_bin(int(line[i]), 16), 4))
-                else:
-                    memory[2:2] = list(to_hex(to_bin(int(line[i]), 16), 4)[2:])
-        elif line[1] == ".byte":
-            for i in range(2, len(line)):
-                if len(memory) > 8:
-                    memory = memory_register(memory)
-                if len(memory) == 0:
-                    memory = list(to_hex(to_bin(int(line[i]), 8), 2))
-                else:
-                    memory[2:2] = list(to_hex(to_bin(int(line[i]), 8), 2)[2:])
-    """
 
 '''
 entry = input("Enter a instruction (0 to exit): ")
