@@ -153,24 +153,27 @@ def memory_reserver(type):
         raise ValueError("Invalid memory reservation type: " + type)
 
 def memory_register(memory):
-    print("".join(memory))
-    return []
+    return "".join(memory)
 
 def data_parser(data):
+    #Retorna uma lista de strings representando os dados em hexadecimal
     memory = []
+    output = []
     data = data.splitlines()
     for line in data:
         line = inst_splitter(line)
         for i in range(2, len(line)):
             if len(memory) > 10-memory_reserver(line[1]):
                 remainder = int("".join(memory), 16)
-                memory = memory_register(to_hex(to_bin(remainder, 32)))
+                output.append(memory_register(to_hex(to_bin(remainder, 32))))
+                memory = []
             if len(memory) == 0:
                 memory = list(to_hex(to_bin(int(line[i],0), memory_reserver(line[1])*4), memory_reserver(line[1])))
             else:
                 memory[2:2] = list(to_hex(to_bin(int(line[i],0), memory_reserver(line[1])*4), memory_reserver(line[1]))[2:])
     remainder = int("".join(memory), 16)
-    memory_register(to_hex(to_bin(remainder, 32)))
+    output.append(memory_register(to_hex(to_bin(remainder, 32))))
+    return output
     """
     if line[1] == ".word":
             for i in range(2, len(line)):
@@ -194,11 +197,6 @@ def data_parser(data):
                 else:
                     memory[2:2] = list(to_hex(to_bin(int(line[i]), 8), 2)[2:])
     """
-
-data_parser("""dado_byte:  .byte 0x10, 0x20
-dado_word:  .word 0xAABBCCDD   
-dado_half:  .half 0x1122
-dado_byte2: .byte 0xEE""")
 
 '''
 entry = input("Enter a instruction (0 to exit): ")

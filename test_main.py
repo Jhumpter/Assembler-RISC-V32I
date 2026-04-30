@@ -55,5 +55,35 @@ class TestMain(unittest.TestCase):
         inst = inst_parser(inst)
         self.assertEqual(inst, "0x02035f03")
 
+    def test_data_parser(self):
+        data = """dado_byte:  .byte 0x10, 0x20
+dado_word:  .word 0xAABBCCDD   
+dado_half:  .half 0x1122
+dado_byte2: .byte 0xEE"""
+        result = ['0x00002010', '0xaabbccdd', '0x00ee1122']
+        self.assertEqual(data_parser(data), result)
+
+    def test_data_parser2(self):
+        data = """val1: .word 0x12345678
+val2: .half 0xABCD
+val3: .byte 0xFF"""
+        result = ['0x12345678', '0x00ffabcd']
+        self.assertEqual(data_parser(data), result)
+
+    def test_data_parser3(self):
+        data = """a: .word 1, 2, 3, 4, 5
+b: .half 7, 6, 5, 4, 5
+c: .byte 6, 5, 4, 3, 2"""
+        result = ['0x00000001', '0x00000002', '0x00000003', '0x00000004', '0x00000005', '0x00060007', '0x00040005', '0x05060005', '0x00020304']
+        self.assertEqual(data_parser(data), result)
+
+    def test_data_parser4(self):
+        data = """max_uint:   .word 0xFFFFFFFF
+max_int:    .word 2147483647
+min_int:    .word -2147483648
+zero:       .word 0"""
+        result = ['0xffffffff', '0x7fffffff', '0x80000000', '0x00000000']
+        self.assertEqual(data_parser(data), result)
+
 if __name__ == '__main__':
     unittest.main()
