@@ -13,9 +13,9 @@ def reg_translator(reg):
     else:        
         raise ValueError("Invalid register name: " + reg)
 
-def to_hex(inst):
-    #Passa o número binário para hexadecimal com 8 dígitos
-    return "0x"+hex(int(inst, 2))[2:].zfill(8)
+def to_hex(inst, digits=8):
+    #Passa o número binário para hexadecimal com digits dígitos
+    return "0x"+hex(int(inst, 2))[2:].zfill(digits)
 
 def to_bin(num, bits):
     #Calcula o complemento de 2 para números negativos e retorna a representação binária de num com o número de bits especificado
@@ -142,6 +142,64 @@ def inst_parser(inst):
     else:
         raise ValueError("Invalid instruction type: " + inst[0])
 
+def memory_reserver(type):
+    if type == ".word":
+        return 8
+    elif type == ".half":
+        return 4
+    elif type == ".byte" or type == ".string":
+        return 2
+    else:
+        raise ValueError("Invalid memory reservation type: " + type)
+
+def memory_register(memory):
+    print("".join(memory))
+    return []
+
+def data_parser(data):
+    memory = []
+    data = data.splitlines()
+    for line in data:
+        line = inst_splitter(line)
+        for i in range(2, len(line)):
+            if len(memory) > 10-memory_reserver(line[1]):
+                remainder = int("".join(memory), 16)
+                memory = memory_register(to_hex(to_bin(remainder, 32)))
+            if len(memory) == 0:
+                memory = list(to_hex(to_bin(int(line[i],0), memory_reserver(line[1])*4), memory_reserver(line[1])))
+            else:
+                memory[2:2] = list(to_hex(to_bin(int(line[i],0), memory_reserver(line[1])*4), memory_reserver(line[1]))[2:])
+    remainder = int("".join(memory), 16)
+    memory_register(to_hex(to_bin(remainder, 32)))
+    """
+    if line[1] == ".word":
+            for i in range(2, len(line)):
+                if len(memory) != 0:
+                    memory_register(memory)
+                memory = memory_register(to_hex(to_bin(int(line[i]), 32)))
+        elif line[1] == ".half":
+            for i in range(2, len(line)):
+                if len(memory) > 6:
+                    memory = memory_register(memory)
+                if len(memory) == 0:
+                    memory = list(to_hex(to_bin(int(line[i]), 16), 4))
+                else:
+                    memory[2:2] = list(to_hex(to_bin(int(line[i]), 16), 4)[2:])
+        elif line[1] == ".byte":
+            for i in range(2, len(line)):
+                if len(memory) > 8:
+                    memory = memory_register(memory)
+                if len(memory) == 0:
+                    memory = list(to_hex(to_bin(int(line[i]), 8), 2))
+                else:
+                    memory[2:2] = list(to_hex(to_bin(int(line[i]), 8), 2)[2:])
+    """
+
+data_parser("""dado_byte:  .byte 0x10, 0x20
+dado_word:  .word 0xAABBCCDD   
+dado_half:  .half 0x1122
+dado_byte2: .byte 0xEE""")
+
 '''
 entry = input("Enter a instruction (0 to exit): ")
 while entry != "0":
@@ -158,4 +216,4 @@ while entry != "0":
 #Vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
 #Fazer interface
 #Separação entre os campos .text e .data
-#Como que faz o assemble do .data?
+#Implementar tradução de strings no .data
