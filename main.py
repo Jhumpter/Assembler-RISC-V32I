@@ -196,22 +196,52 @@ def code_instructions(instructions):
         output.append(inst_parser(line, instructions.index(line)+1))
     return output
 
+def code_data(data):
+    #Retorna uma lista de strings representando os dados em hexadecimal
+    output = []
+    for line in data:
+        output.append(data_parser(line))
+    return output
+
 labels = {}
 file_name = input("Enter the name of the .asm file: ")
+data = []
+instructions = []
 with open(file_name, "r") as file:
     lines = file.readlines()
+
+data_block = False
+
 for line in lines:
-    #Assumnido que foi filtrado apenas as linhas de instrução
+    if not line.strip() == '':
+        if line.strip() == ".data":
+            data_block = True
+        elif line.strip() == ".text":
+            data_block = False
+        elif data_block:
+            data.append(line.strip())
+        else:
+            instructions.append(line.strip()) 
+
+for line in instructions:
     #Mapeando as labels para seus endereços
     if line.find(":") != -1:
-        labels[line[:line.find(":")]] = lines.index(line)+1
-    lines[lines.index(line)] = line[line.find(":")+1:]
-coded_instructions = code_instructions(lines)
+        labels[line[:line.find(":")]] = instructions.index(line)+1
+        instructions[instructions.index(line)] = line[line.find(":")+1:]
+
+print("data:")
+coded_data = code_data(data)
+for line in coded_data:
+    for item in line:
+        print(item)
+
+print()
+print("instructions:")
+coded_instructions = code_instructions(instructions)
 for line in coded_instructions:
     print(line)
 
 #To-do:
 
 #Implementar a escrita de um arquivo .mif
-#Separação entre os campos .text e .data
 #Implementar tradução de strings no .data
