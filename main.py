@@ -26,6 +26,12 @@ def to_bin(num, bits):
     else:
         raise ValueError("Invalid number: " + str(num))
 
+def label_adress(label):
+    for key in labels:
+        if key == label:
+            return labels[key]
+    raise ValueError("Label not found: " + label)
+
 def r_inst (type, res, arg1, arg2):
     #funct7/rs2/rs1/funct3/rd/opcode
     arg1 = reg_translator(arg1)
@@ -83,18 +89,26 @@ def s_inst (type, arg2, imm, arg1):
     if type == "sw":
         return to_hex(imm[:7]+arg2+arg1+"010"+imm[7:]+"0100011")
 
-def j_inst (type, res, imm):
+def j_inst (type, res, imm, line_num):
     #imm[20|10:1|11|19:12]/rd/opcode
     res = reg_translator(res)
-    imm = to_bin(int(imm,0), 21)
+    try:
+        imm = to_bin(int(imm,0), 21)
+    except ValueError:
+        imm = (label_adress(imm) - line_num)*4
+        imm = to_bin(imm, 21)
     if type == "jal":
         return to_hex(imm[0]+imm[10:20]+imm[9]+imm[1:9]+res+"1101111")
     
-def b_inst (type, arg1, arg2, imm):
+def b_inst (type, arg1, arg2, imm, line_num):
     #imm[12|10:5]/rs2/rs1/funct3/imm[4:1|11]/opcode
     arg1 = reg_translator(arg1)
     arg2 = reg_translator(arg2)
-    imm = to_bin(int(imm,0), 13)
+    try:
+        imm = to_bin(int(imm,0), 13)
+    except ValueError:
+        imm = (label_adress(imm) - line_num)*4
+        imm = to_bin(imm, 13)
     if type == "beq":
         return to_hex(imm[0]+imm[2:8]+arg2+arg1+"000"+imm[8:12]+imm[1]+"1100011")
     elif type == "bne":
@@ -115,7 +129,7 @@ def inst_splitter(inst):
     inst = inst.replace(")", " ")
     return inst.split()
 
-def inst_parser(inst):
+def inst_parser(inst,line_num):
     inst = inst_splitter(inst)
 
     r_type = ["add", "sub", "and", "or", "xor", "slt", "sll", "srl"]
@@ -134,9 +148,9 @@ def inst_parser(inst):
     elif inst[0] in j_type:
         if len(inst) == 2:
             inst.insert(1, "ra")
-        return j_inst(inst[0], inst[1], inst[2])
+        return j_inst(inst[0], inst[1], inst[2], line_num)
     elif inst[0] in b_type:
-        return b_inst(inst[0], inst[1], inst[2], inst[3])
+        return b_inst(inst[0], inst[1], inst[2], inst[3], line_num)
     elif inst[0] in u_type:
         return u_inst(inst[0], inst[1], inst[2])
     else:
@@ -175,20 +189,29 @@ def data_parser(data):
     output.append(memory_register(to_hex(to_bin(remainder, 32))))
     return output
 
-'''
-entry = input("Enter a instruction (0 to exit): ")
-while entry != "0":
-    try:
-        print(inst_parser(entry))
-    except ValueError as e:
-        print(e)
-    entry = input("Enter a instruction (0 to exit): ")
-'''
+def code_instructions(instructions):
+    #Retorna uma lista de strings representando as instruções em hexadecimal
+    output = []
+    for line in instructions:
+        output.append(inst_parser(line, instructions.index(line)+1))
+    return output
+
+labels = {}
+file_name = input("Enter the name of the .asm file: ")
+with open(file_name, "r") as file:
+    lines = file.readlines()
+for line in lines:
+    #Assumnido que foi filtrado apenas as linhas de instrução
+    #Mapeando as labels para seus endereços
+    if line.find(":") != -1:
+        labels[line[:line.find(":")]] = lines.index(line)+1
+    lines[lines.index(line)] = line[line.find(":")+1:]
+coded_instructions = code_instructions(lines)
+for line in coded_instructions:
+    print(line)
 
 #To-do:
 
-#Implementar a leitura de um arquivo .asm e a escrita de um arquivo .mif
-#Vai ser necessário encontrar o endereço de "Label:" e calcular o valor de imm a partir disso
-#Fazer interface
+#Implementar a escrita de um arquivo .mif
 #Separação entre os campos .text e .data
 #Implementar tradução de strings no .data
