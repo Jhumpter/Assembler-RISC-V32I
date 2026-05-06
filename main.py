@@ -200,7 +200,6 @@ def string_handler(line):
             output.append(str(ord(char)))
     return output
 
-
 def code_instructions(instructions):
     #Retorna uma lista de strings representando as instruções em hexadecimal
     output = []
@@ -208,13 +207,36 @@ def code_instructions(instructions):
         output.append(inst_parser(line, instructions.index(line)+1))
     return output
 
-def code_data(data):
-    print(data)
-    #Retorna uma lista de strings representando os dados em hexadecimal
-    output = []
-    for line in data:
-        output.append(data_parser(line))
-    return output
+def create_data_file(data):
+    data_file = file_name[:-4] + "_data" +".mif"
+    with open(data_file, "w") as file:
+        memory_size = 32768
+        file.write(f"DEPTH = {memory_size};\n")
+        file.write("WIDTH = 32;\n")
+        file.write("ADDRESS_RADIX = HEX;\n")
+        file.write("DATA_RADIX = HEX;\n")
+        file.write("CONTENT\n")
+        file.write("BEGIN\n")
+        for i in range(memory_size//32):
+            if i < len(coded_data):
+                file.write(to_hex(to_bin(i, 32))[2:] + " : " + coded_data[i][2:] + ";\n")
+            else:
+                file.write(to_hex(to_bin(i, 32))[2:] + " : 00000000;\n")
+        file.write("END;")
+
+def create_text_file(instructions):
+    inst_file = file_name[:-4] + "_text" +".mif"
+    with open(inst_file, "w") as file:
+        memory_size = 16384
+        file.write(f"DEPTH = {memory_size};\n")
+        file.write("WIDTH = 32;\n")
+        file.write("ADDRESS_RADIX = HEX;\n")
+        file.write("DATA_RADIX = HEX;\n")
+        file.write("CONTENT\n")
+        file.write("BEGIN\n")
+        for i in range(len(coded_instructions)):
+            file.write(to_hex(to_bin(i, 32))[2:] + " : " + coded_instructions[i][2:] + ";\n")
+        file.write("END;")
 
 labels = {}
 file_name = input("Enter the name of the .asm file: ")
@@ -242,18 +264,14 @@ for line in instructions:
         labels[line[:line.find(":")]] = instructions.index(line)+1
         instructions[instructions.index(line)] = line[line.find(":")+1:]
 
-print("data:")
 coded_data = data_parser(data)
-for line in coded_data:
-    print(line)
-
-print()
-print("instructions:")
+create_data_file(coded_data)
 coded_instructions = code_instructions(instructions)
-for line in coded_instructions:
-    print(line)
+create_text_file(coded_instructions)
 
 #To-do:
 
-#Implementar a escrita de um arquivo .mif
-#Ver se dá pra chamar o to_hex sem ter que chamar o to_bin antes (data_parser)
+#Se o arquivo já existir?
+#Flexibilizar as funções to_bin e to_hex
+#Criar uma main?
+#
