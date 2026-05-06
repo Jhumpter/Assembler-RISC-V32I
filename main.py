@@ -123,14 +123,14 @@ def u_inst (type, res, imm):
     elif type == "auipc":
         return to_hex(imm+res+"0010111")
 
-def inst_splitter(inst):
+def splitter(inst):
     inst = inst.replace(",", " ")
     inst = inst.replace("(", " ")
     inst = inst.replace(")", " ")
     return inst.split()
 
 def inst_parser(inst,line_num):
-    inst = inst_splitter(inst)
+    inst = splitter(inst)
 
     r_type = ["add", "sub", "and", "or", "xor", "slt", "sll", "srl"]
     i_type = ["lw", "addi", "jalr", "slti", "andi", "ori", "xori", "lhu"]
@@ -156,7 +156,8 @@ def inst_parser(inst,line_num):
     else:
         raise ValueError("Invalid instruction type: " + inst[0])
 
-def memory_reserver(type):
+def memory_size(type):
+    #Retorna o número de casas que um tipo de dado ocupa no código hexadecimal
     if type == ".word":
         return 8
     elif type == ".half":
@@ -166,27 +167,24 @@ def memory_reserver(type):
     else:
         raise ValueError("Invalid memory reservation type: " + type)
 
-def memory_register(memory):
-    return "".join(memory)
-
 def data_parser(data):
     #Retorna uma lista de strings representando os dados em hexadecimal
     memory = []
     output = []
     data = data.splitlines()
     for line in data:
-        line = inst_splitter(line)
+        line = splitter(line)
         for i in range(2, len(line)):
-            if len(memory) > 10-memory_reserver(line[1]):
+            if len(memory) > 10-memory_size(line[1]):
                 remainder = int("".join(memory), 16)
-                output.append(memory_register(to_hex(to_bin(remainder, 32))))
+                output.append("".join((to_hex(to_bin(remainder, 32)))))
                 memory = []
             if len(memory) == 0:
-                memory = list(to_hex(to_bin(int(line[i],0), memory_reserver(line[1])*4), memory_reserver(line[1])))
+                memory = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1])))
             else:
-                memory[2:2] = list(to_hex(to_bin(int(line[i],0), memory_reserver(line[1])*4), memory_reserver(line[1]))[2:])
+                memory[2:2] = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1]))[2:])
     remainder = int("".join(memory), 16)
-    output.append(memory_register(to_hex(to_bin(remainder, 32))))
+    output.append("".join((to_hex(to_bin(remainder, 32)))))
     return output
 
 def code_instructions(instructions):
