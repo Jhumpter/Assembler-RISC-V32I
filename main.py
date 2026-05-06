@@ -1,3 +1,6 @@
+global labels
+labels = {}
+
 def reg_translator(reg):
     translator = ["zero","ra","sp","gp","tp","t0","t1","t2",
      "s0","s1","a0","a1","a2","a3","a4","a5",
@@ -207,8 +210,8 @@ def code_instructions(instructions):
         output.append(inst_parser(line, instructions.index(line)+1))
     return output
 
-def create_data_file(data):
-    data_file = file_name[:-4] + "_data" +".mif"
+def create_data_file(data, origin_file):
+    data_file = origin_file[:-4] + "_data" +".mif"
     with open(data_file, "w") as file:
         memory_size = 32768
         file.write(f"DEPTH = {memory_size};\n")
@@ -218,14 +221,14 @@ def create_data_file(data):
         file.write("CONTENT\n")
         file.write("BEGIN\n")
         for i in range(memory_size//32):
-            if i < len(coded_data):
-                file.write(to_hex(to_bin(i, 32))[2:] + " : " + coded_data[i][2:] + ";\n")
+            if i < len(data):
+                file.write(to_hex(to_bin(i, 32))[2:] + " : " + data[i][2:] + ";\n")
             else:
                 file.write(to_hex(to_bin(i, 32))[2:] + " : 00000000;\n")
         file.write("END;")
 
-def create_text_file(instructions):
-    inst_file = file_name[:-4] + "_text" +".mif"
+def create_text_file(instructions, origin_file):
+    inst_file = origin_file[:-4] + "_text" +".mif"
     with open(inst_file, "w") as file:
         memory_size = 16384
         file.write(f"DEPTH = {memory_size};\n")
@@ -234,44 +237,67 @@ def create_text_file(instructions):
         file.write("DATA_RADIX = HEX;\n")
         file.write("CONTENT\n")
         file.write("BEGIN\n")
-        for i in range(len(coded_instructions)):
-            file.write(to_hex(to_bin(i, 32))[2:] + " : " + coded_instructions[i][2:] + ";\n")
+        for i in range(len(instructions)):
+            file.write(to_hex(to_bin(i, 32))[2:] + " : " + instructions[i][2:] + ";\n")
         file.write("END;")
 
-labels = {}
-file_name = input("Enter the name of the .asm file: ")
-data = ""
-instructions = []
-with open(file_name, "r") as file:
-    lines = file.readlines()
+def main():
+    while True:
+        file_name = input("Enter the name of the .asm file (0 to exit): ")
+        if file_name == "0":
+            exit()
+        try:
+            if not ".asm" in file_name:
+                raise ValueError("Invalid file type: " + file_name)
+            with open(file_name, "r") as file:
+                lines = file.readlines()
+                break
+        except FileNotFoundError:
+            print("File not found: " + file_name)
+        except ValueError as e:
+            print(str(e))
+        except Exception as e:
+            print("Error: " + str(e))
 
-data_block = False
+    data = ""
+    instructions = []
 
-for line in lines:
-    if not line.strip() == '':
-        if line.strip() == ".data":
-            data_block = True
-        elif line.strip() == ".text":
-            data_block = False
-        elif data_block:
-            data += line.strip() + "\n"
-        else:
-            instructions.append(line.strip()) 
+    data_block = False
+    for line in lines:
+        if not line.strip() == '':
+            if line.strip() == ".data":
+                data_block = True
+            elif line.strip() == ".text":
+                data_block = False
+            elif data_block:
+                data += line.strip() + "\n"
+            else:
+                instructions.append(line.strip()) 
 
-for line in instructions:
-    #Mapeando as labels para seus endereços
-    if line.find(":") != -1:
-        labels[line[:line.find(":")]] = instructions.index(line)+1
-        instructions[instructions.index(line)] = line[line.find(":")+1:]
+    for line in instructions:
+        #Mapeando as labels para seus endereços
+        if line.find(":") != -1:
+            labels[line[:line.find(":")]] = instructions.index(line)+1
+            instructions[instructions.index(line)] = line[line.find(":")+1:]
 
-coded_data = data_parser(data)
-create_data_file(coded_data)
-coded_instructions = code_instructions(instructions)
-create_text_file(coded_instructions)
+    try:
+        if data != "":
+            coded_data = data_parser(data)
+            create_data_file(coded_data, file_name)
+    except Exception as e:
+        print("Error with .data field: " + str(e))
+    try:
+        if instructions != []:
+            coded_instructions = code_instructions(instructions)
+            create_text_file(coded_instructions, file_name)
+    except Exception as e:
+        print("Error with .text field: " + str(e))
+
+main()
 
 #To-do:
 
 #Se o arquivo já existir?
 #Flexibilizar as funções to_bin e to_hex
-#Criar uma main?
-#
+#Unificar as funções de criação dos arquivos .mif?
+#Adicionar o modificador u?
