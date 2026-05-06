@@ -168,12 +168,15 @@ def memory_size(type):
         raise ValueError("Invalid memory reservation type: " + type)
 
 def data_parser(data):
+    #Recebe uma string com todas as linhas do bloco .data
     #Retorna uma lista de strings representando os dados em hexadecimal
     memory = []
     output = []
     data = data.splitlines()
     for line in data:
         line = splitter(line)
+        if line[1] == ".string":
+            line = string_handler(line)
         for i in range(2, len(line)):
             if len(memory) > 10-memory_size(line[1]):
                 remainder = int("".join(memory), 16)
@@ -187,6 +190,17 @@ def data_parser(data):
     output.append("".join((to_hex(to_bin(remainder, 32)))))
     return output
 
+def string_handler(line):
+    string = " ".join(line[2:])
+    output = []
+    output.append(line[0])
+    output.append(line[1])
+    for char in string:
+        if char != '"' and char != "'":
+            output.append(str(ord(char)))
+    return output
+
+
 def code_instructions(instructions):
     #Retorna uma lista de strings representando as instruções em hexadecimal
     output = []
@@ -195,6 +209,7 @@ def code_instructions(instructions):
     return output
 
 def code_data(data):
+    print(data)
     #Retorna uma lista de strings representando os dados em hexadecimal
     output = []
     for line in data:
@@ -203,7 +218,7 @@ def code_data(data):
 
 labels = {}
 file_name = input("Enter the name of the .asm file: ")
-data = []
+data = ""
 instructions = []
 with open(file_name, "r") as file:
     lines = file.readlines()
@@ -217,7 +232,7 @@ for line in lines:
         elif line.strip() == ".text":
             data_block = False
         elif data_block:
-            data.append(line.strip())
+            data += line.strip() + "\n"
         else:
             instructions.append(line.strip()) 
 
@@ -228,10 +243,9 @@ for line in instructions:
         instructions[instructions.index(line)] = line[line.find(":")+1:]
 
 print("data:")
-coded_data = code_data(data)
+coded_data = data_parser(data)
 for line in coded_data:
-    for item in line:
-        print(item)
+    print(line)
 
 print()
 print("instructions:")
@@ -242,4 +256,4 @@ for line in coded_instructions:
 #To-do:
 
 #Implementar a escrita de um arquivo .mif
-#Implementar tradução de strings no .data
+#Ver se dá pra chamar o to_hex sem ter que chamar o to_bin antes (data_parser)

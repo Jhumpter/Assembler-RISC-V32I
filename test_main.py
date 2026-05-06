@@ -85,5 +85,10 @@ zero:       .word 0"""
         result = ['0xffffffff', '0x7fffffff', '0x80000000', '0x00000000']
         self.assertEqual(data_parser(data), result)
 
+    def string_handler_test(self):
+        line = "str: .string 'Hello, World!'"
+        result = ['str', '.string', 72, 101, 108, 108, 111, 44, 32, 87, 111, 114, 108, 100, 33]
+        self.assertEqual(string_handler(line), result)
+
 if __name__ == '__main__':
     unittest.main()
