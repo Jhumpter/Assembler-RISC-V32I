@@ -35,32 +35,34 @@ def to_bin(num, bits):
         raise ValueError("Invalid number: " + str(num))
 
 def is_instruction(string):
+    if string == '':
+        return False
     string = splitter(string)
     return string[0] in ["add", "sub", "and", "or", "xor", "slt", "sll", "srl","lw", "addi", "jalr", "slti", "andi", "ori", "xori", "lhu","sw","lui", "auipc","jal","beq", "bne"]
 
 def map_labels(instructions):
     #Mapeia as labels
     without_label = []
+    line_number = 0
     for line in instructions:
-        if line.find(":") != -1:
-            if line[:line.find(":")] != '':
-                line_number = instructions.index(line)
-                for i in range(line_number, len(instructions)):
-                    if instructions[i].find(":") != -1:
-                        remain = line[line.find(":")+1:] 
-                    else:
-                        remain = instructions[i]
-                    if remain != '' and is_instruction(remain):
-                        without_label.append(remain)
+        line_number += 1 #numero das linhas começa no 1, a das listas no 0
+        if line.find(":") != -1 and line[:line.find(":")] != '': #Se o elemento é uma label não vazia
+            #Achar a próxima instrução
+            if is_instruction(line[line.find(":")+1:]): #Se o resto da linha é um comando
+                without_label.append(line[line.find(":")+1:])
+                labels[line[:line.find(":")]] = line_number
+            else:
+                line_number -= 1
+                decrement = 0
+                for i in range(line_number, len(instructions)+1):
+                    if is_instruction(instructions[i-1]): #Se a linha for um comando, pega a linha dela e guarda no dicionário
+                        labels[line[:line.find(":")]] = i - decrement + 1 #+1 linha da intrução
                         break
-                labels[line[:line.find(":")]] = instructions.index(line)
-        else:
-            if i != instructions.index(line):
-                without_label.append(line)
-    print(without_label)
+                    else:
+                        decrement -= 1
+        else: #Se tiver Label: comando direto
+            without_label.append(line)
     return without_label
-
-print()
 
 def label_adress(label):
     #Retorna o endereço de uma label
@@ -128,16 +130,11 @@ def s_inst (type, arg2, imm, arg1):
 
 def j_inst (type, res, imm, line_num):
     #imm[20|10:1|11|19:12]/rd/opcode
-    #0 0000000010 0 00000000 00000 1101111
-    #00000000000000000010
-    print(imm)
     res = reg_translator(res)
     if imm.isdigit():
         imm = to_bin(int(imm,0), 21)
     else:
         imm = (label_adress(imm) - line_num)*4
-        print(line_num)
-        print(labels)
         imm = to_bin(imm, 21)
     if type == "jal":
         return to_hex(imm[0]+imm[10:20]+imm[9]+imm[1:9]+res+"1101111")
@@ -201,8 +198,10 @@ def inst_parser(inst,line_num):
 def code_instructions(instructions):
     #Retorna uma lista de strings representando as instruções em hexadecimal
     output = []
+    line_number = 0
     for line in instructions:
-        output.append(inst_parser(line, instructions.index(line)+2))
+        line_number += 1
+        output.append(inst_parser(line, line_number))
     return output
 
 def memory_size(type):
@@ -260,7 +259,7 @@ BEGIN
 """
 
 def create_data_file(data, origin_file):
-    data_file = origin_file[:-4] + "_data" +".mif"
+    data_file = origin_file[:-4] + "_dat" +".mif"
     with open(data_file, "w") as file:
         memory_size = 32768
         file.write(header_mif(memory_size))
@@ -331,7 +330,3 @@ def main():
         print("Error with .text field: " + str(e))
 
 main()
-
-#0040006f = 00000000010000000000000001101111
-#0000006f = 
-#Unificar o jeito que calcula o número da linha para labels e para instruções
