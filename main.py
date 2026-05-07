@@ -210,16 +210,20 @@ def code_instructions(instructions):
         output.append(inst_parser(line, instructions.index(line)+1))
     return output
 
+def header_mif(memory_size):
+    return f"""DEPTH = {memory_size};
+WIDTH = 32;
+ADDRESS_RADIX = HEX;
+DATA_RADIX = HEX;
+CONTENT
+BEGIN
+"""
+
 def create_data_file(data, origin_file):
     data_file = origin_file[:-4] + "_data" +".mif"
     with open(data_file, "w") as file:
         memory_size = 32768
-        file.write(f"DEPTH = {memory_size};\n")
-        file.write("WIDTH = 32;\n")
-        file.write("ADDRESS_RADIX = HEX;\n")
-        file.write("DATA_RADIX = HEX;\n")
-        file.write("CONTENT\n")
-        file.write("BEGIN\n")
+        file.write(header_mif(memory_size))
         for i in range(memory_size//32):
             if i < len(data):
                 file.write(to_hex(to_bin(i, 32))[2:] + " : " + data[i][2:] + ";\n")
@@ -231,15 +235,16 @@ def create_text_file(instructions, origin_file):
     inst_file = origin_file[:-4] + "_text" +".mif"
     with open(inst_file, "w") as file:
         memory_size = 16384
-        file.write(f"DEPTH = {memory_size};\n")
-        file.write("WIDTH = 32;\n")
-        file.write("ADDRESS_RADIX = HEX;\n")
-        file.write("DATA_RADIX = HEX;\n")
-        file.write("CONTENT\n")
-        file.write("BEGIN\n")
+        file.write(header_mif(memory_size))
         for i in range(len(instructions)):
             file.write(to_hex(to_bin(i, 32))[2:] + " : " + instructions[i][2:] + ";\n")
         file.write("END;")
+
+def map_labels(instructions):
+    for line in instructions:
+        if line.find(":") != -1:
+            labels[line[:line.find(":")]] = instructions.index(line)+1
+            instructions[instructions.index(line)] = line[line.find(":")+1:]
 
 def main():
     while True:
@@ -274,11 +279,7 @@ def main():
             else:
                 instructions.append(line.strip()) 
 
-    for line in instructions:
-        #Mapeando as labels para seus endereços
-        if line.find(":") != -1:
-            labels[line[:line.find(":")]] = instructions.index(line)+1
-            instructions[instructions.index(line)] = line[line.find(":")+1:]
+    map_labels(instructions)
 
     try:
         if data != "":
@@ -294,10 +295,3 @@ def main():
         print("Error with .text field: " + str(e))
 
 main()
-
-#To-do:
-
-#Se o arquivo já existir?
-#Flexibilizar as funções to_bin e to_hex
-#Unificar as funções de criação dos arquivos .mif?
-#Adicionar o modificador u?
