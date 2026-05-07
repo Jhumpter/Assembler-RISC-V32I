@@ -1,3 +1,7 @@
+#Aluno: João Paulo Silva Mendes
+#Matrícula: 242026187
+#Run: python main.py
+
 global labels
 labels = {}
 
@@ -30,23 +34,33 @@ def to_bin(num, bits):
     else:
         raise ValueError("Invalid number: " + str(num))
 
+def is_instruction(string):
+    string = splitter(string)
+    return string[0] in ["add", "sub", "and", "or", "xor", "slt", "sll", "srl","lw", "addi", "jalr", "slti", "andi", "ori", "xori", "lhu","sw","lui", "auipc","jal","beq", "bne"]
+
 def map_labels(instructions):
     #Mapeia as labels
     without_label = []
     for line in instructions:
         if line.find(":") != -1:
             if line[:line.find(":")] != '':
-                labels[line[:line.find(":")]] = instructions.index(line)+1
-            try:
-                #Verifica se o resto da linha é uma instrução
-                remain = line[line.find(":")+1:]
-                inst_parser(remain,instructions.index(line))
-                without_label.append(remain)
-            except:
-                pass
+                line_number = instructions.index(line)
+                for i in range(line_number, len(instructions)):
+                    if instructions[i].find(":") != -1:
+                        remain = line[line.find(":")+1:] 
+                    else:
+                        remain = instructions[i]
+                    if remain != '' and is_instruction(remain):
+                        without_label.append(remain)
+                        break
+                labels[line[:line.find(":")]] = instructions.index(line)
         else:
-            without_label.append(line)
+            if i != instructions.index(line):
+                without_label.append(line)
+    print(without_label)
     return without_label
+
+print()
 
 def label_adress(label):
     #Retorna o endereço de uma label
@@ -114,11 +128,16 @@ def s_inst (type, arg2, imm, arg1):
 
 def j_inst (type, res, imm, line_num):
     #imm[20|10:1|11|19:12]/rd/opcode
+    #0 0000000010 0 00000000 00000 1101111
+    #00000000000000000010
+    print(imm)
     res = reg_translator(res)
-    try:
+    if imm.isdigit():
         imm = to_bin(int(imm,0), 21)
-    except ValueError:
+    else:
         imm = (label_adress(imm) - line_num)*4
+        print(line_num)
+        print(labels)
         imm = to_bin(imm, 21)
     if type == "jal":
         return to_hex(imm[0]+imm[10:20]+imm[9]+imm[1:9]+res+"1101111")
@@ -183,7 +202,7 @@ def code_instructions(instructions):
     #Retorna uma lista de strings representando as instruções em hexadecimal
     output = []
     for line in instructions:
-        output.append(inst_parser(line, instructions.index(line)+1))
+        output.append(inst_parser(line, instructions.index(line)+2))
     return output
 
 def memory_size(type):
@@ -250,17 +269,17 @@ def create_data_file(data, origin_file):
                 file.write(to_hex(to_bin(i, 32))[2:] + " : " + data[i][2:] + ";\n")
             else:
                 file.write(to_hex(to_bin(i, 32))[2:] + " : 00000000;\n")
-        file.write("END;")
+        file.write("END;\n")
     print(f"{data_file} file created!")
 
 def create_text_file(instructions, origin_file):
-    inst_file = origin_file[:-4] + "_text" +".mif"
+    inst_file = origin_file[:-4] + "_txt" +".mif"
     with open(inst_file, "w") as file:
         memory_size = 16384
         file.write(header_mif(memory_size))
         for i in range(len(instructions)):
             file.write(to_hex(to_bin(i, 32))[2:] + " : " + instructions[i][2:] + ";\n")
-        file.write("END;")
+        file.write("END;\n")
     print(f"{inst_file} file created!")
 
 def main():
@@ -312,3 +331,7 @@ def main():
         print("Error with .text field: " + str(e))
 
 main()
+
+#0040006f = 00000000010000000000000001101111
+#0000006f = 
+#Unificar o jeito que calcula o número da linha para labels e para instruções
