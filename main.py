@@ -2,6 +2,7 @@ global labels
 labels = {}
 
 def reg_translator(reg):
+    #Traduz o registrador (ou máscara) para o número correspondente
     translator = ["zero","ra","sp","gp","tp","t0","t1","t2",
      "s0","s1","a0","a1","a2","a3","a4","a5",
      "a6","a7","s2","s3","s4","s5","s6",
@@ -30,6 +31,7 @@ def to_bin(num, bits):
         raise ValueError("Invalid number: " + str(num))
 
 def label_adress(label):
+    #Retorna o endereço de uma label
     for key in labels:
         if key == label:
             return labels[key]
@@ -194,6 +196,7 @@ def data_parser(data):
     return output
 
 def string_handler(line):
+    #Retorna a linha em forma de lista, mas com os caracteres transformados em ascii
     string = " ".join(line[2:])
     output = []
     output.append(line[0])
@@ -241,10 +244,22 @@ def create_text_file(instructions, origin_file):
         file.write("END;")
 
 def map_labels(instructions):
+    #Mapeia as labels
+    without_label = []
     for line in instructions:
         if line.find(":") != -1:
-            labels[line[:line.find(":")]] = instructions.index(line)+1
-            instructions[instructions.index(line)] = line[line.find(":")+1:]
+            if line[:line.find(":")] != '':
+                labels[line[:line.find(":")]] = instructions.index(line)+1
+            try:
+                #Verifica se o resto da linha é uma instrução
+                remain = line[line.find(":")+1:]
+                inst_parser(remain,instructions.index(line))
+                without_label.append(remain)
+            except:
+                pass
+        else:
+            without_label.append(line)
+    return without_label
 
 def main():
     while True:
@@ -279,7 +294,7 @@ def main():
             else:
                 instructions.append(line.strip()) 
 
-    map_labels(instructions)
+    instructions = map_labels(instructions)
 
     try:
         if data != "":
