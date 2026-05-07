@@ -251,6 +251,7 @@ def create_data_file(data, origin_file):
             else:
                 file.write(to_hex(to_bin(i, 32))[2:] + " : 00000000;\n")
         file.write("END;")
+    print(f"{data_file} file created!")
 
 def create_text_file(instructions, origin_file):
     inst_file = origin_file[:-4] + "_text" +".mif"
@@ -260,6 +261,7 @@ def create_text_file(instructions, origin_file):
         for i in range(len(instructions)):
             file.write(to_hex(to_bin(i, 32))[2:] + " : " + instructions[i][2:] + ";\n")
         file.write("END;")
+    print(f"{inst_file} file created!")
 
 def main():
     while True:
