@@ -1,6 +1,8 @@
-#Aluno: João Paulo Silva Mendes
-#Matrícula: 242026187
-#Run: python main.py
+'''
+Requirements: Python 3 installed
+
+To run: type "python main.py" in the terminal.
+'''
 
 global labels, file_name
 file_name = ""
@@ -315,7 +317,7 @@ def find_line(content):
 def main():
     global file_name
     while True:
-        file_name = input("Enter the name of the .asm file (0 to exit): ")
+        file_name = input("Enter the filename with the .asm extension (0 to exit): ")
         if file_name == "0":
             exit()
         try:
