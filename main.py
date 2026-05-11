@@ -2,7 +2,8 @@
 #Matrícula: 242026187
 #Run: python main.py
 
-global labels
+global labels, file_name
+file_name = ""
 labels = {}
 
 def reg_translator(reg):
@@ -19,7 +20,7 @@ def reg_translator(reg):
     elif reg == "fp":
         return to_bin(8, 5)
     else:        
-        raise ValueError("Invalid register name: " + reg)
+        raise ValueError(f"Invalid register name: \"{reg}\"")
 
 def to_hex(inst, digits=8):
     #Passa o número binário para hexadecimal com digits dígitos
@@ -32,7 +33,7 @@ def to_bin(num, bits):
     elif num < 0:
         return bin((1 << bits) + num)[2:]
     else:
-        raise ValueError("Invalid number: " + str(num))
+        raise ValueError("Conversion to binary failed for: " + str(num))
 
 def is_instruction(string):
     if string == '':
@@ -95,7 +96,7 @@ def r_inst (type, res, arg1, arg2):
 
 def i_inst (type, res, arg1, imm):
     #imm[11:0]/rs1/funct3/rd/opcode
-    if type == "lw" or type == "lhu":
+    if type == "lw" or type == "lhu" or type == "jalr":
         arg1, imm = imm, arg1
         arg1 = reg_translator(arg1)
         imm = to_bin(int(imm), 12)
@@ -143,9 +144,9 @@ def b_inst (type, arg1, arg2, imm, line_num):
     #imm[12|10:5]/rs2/rs1/funct3/imm[4:1|11]/opcode
     arg1 = reg_translator(arg1)
     arg2 = reg_translator(arg2)
-    try:
+    if imm.isdigit():
         imm = to_bin(int(imm,0), 13)
-    except ValueError:
+    else:
         imm = (label_adress(imm) - line_num)*4
         imm = to_bin(imm, 13)
     if type == "beq":
@@ -169,6 +170,7 @@ def splitter(inst):
     return inst.split()
 
 def inst_parser(inst,line_num):
+    aux = inst
     inst = splitter(inst)
 
     r_type = ["add", "sub", "and", "or", "xor", "slt", "sll", "srl"]
@@ -177,23 +179,32 @@ def inst_parser(inst,line_num):
     u_type = ["lui", "auipc"]
     j_type = ["jal"]
     b_type = ["beq", "bne"]
-
-    if inst[0] in r_type:
-        return r_inst(inst[0], inst[1], inst[2], inst[3])
-    elif inst[0] in i_type:
-        return i_inst(inst[0], inst[1], inst[2], inst[3])
-    elif inst[0] in s_type:
-        return s_inst(inst[0], inst[1], inst[2], inst[3])
-    elif inst[0] in j_type:
-        if len(inst) == 2:
-            inst.insert(1, "ra")
-        return j_inst(inst[0], inst[1], inst[2], line_num)
-    elif inst[0] in b_type:
-        return b_inst(inst[0], inst[1], inst[2], inst[3], line_num)
-    elif inst[0] in u_type:
-        return u_inst(inst[0], inst[1], inst[2])
-    else:
-        raise ValueError("Invalid instruction type: " + inst[0])
+    try:
+        if len(inst)>3 and (inst[0] in j_type or inst[0] in u_type):
+            raise ValueError(f"Too many operands -> \"{aux}\"")
+        elif len(inst)>4:
+            raise ValueError(f"Too many operands -> \"{aux}\"")
+        if inst[0] in r_type:
+            return r_inst(inst[0], inst[1], inst[2], inst[3])
+        elif inst[0] in i_type:
+            return i_inst(inst[0], inst[1], inst[2], inst[3])
+        elif inst[0] in s_type:
+            return s_inst(inst[0], inst[1], inst[2], inst[3])
+        elif inst[0] in j_type:
+            if len(inst) == 2:
+                inst.insert(1, "ra")
+            return j_inst(inst[0], inst[1], inst[2], line_num)
+        elif inst[0] in b_type:
+            return b_inst(inst[0], inst[1], inst[2], inst[3], line_num)
+        elif inst[0] in u_type:
+            return u_inst(inst[0], inst[1], inst[2])
+        else:
+            raise ValueError(f"Invalid instruction type: \"{inst[0]}\" -> \"{aux}\"")
+    except Exception as e:
+        if "int()" in str(e):
+            raise ValueError(f"Invalid immediate: \"{aux}\" (line {find_line(aux)})")
+        else:
+            raise ValueError(str(e) + f" (line {find_line(aux)})")
 
 def code_instructions(instructions):
     #Retorna uma lista de strings representando as instruções em hexadecimal
@@ -201,7 +212,10 @@ def code_instructions(instructions):
     line_number = 0
     for line in instructions:
         line_number += 1
-        output.append(inst_parser(line, line_number))
+        try:
+            output.append(inst_parser(line, line_number))
+        except Exception as e:
+            raise ValueError(str(e))
     return output
 
 def memory_size(type):
@@ -218,29 +232,38 @@ def memory_size(type):
 def data_parser(data):
     #Recebe uma string com todas as linhas do bloco .data
     #Retorna uma lista de strings representando os dados em hexadecimal
-    memory = []
-    output = []
-    data = data.splitlines()
-    for line in data:
-        line = splitter(line)
-        if line[1] == ".string":
-            line = string_handler(line)
-        for i in range(2, len(line)):
-            if len(memory) > 10-memory_size(line[1]):
-                remainder = int("".join(memory), 16)
-                output.append("".join((to_hex(to_bin(remainder, 32)))))
-                memory = []
-            if len(memory) == 0:
-                memory = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1])))
-            else:
-                memory[2:2] = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1]))[2:])
-    remainder = int("".join(memory), 16)
-    output.append("".join((to_hex(to_bin(remainder, 32)))))
-    return output
+    try:
+        memory = []
+        output = []
+        data = data.splitlines()
+        for line in data:
+            line = splitter(line)
+            if line[1] == ".string":
+                line = string_handler(line)
+            for i in range(2, len(line)):
+                if len(memory) > 10-memory_size(line[1]):
+                    remainder = int("".join(memory), 16)
+                    output.append("".join((to_hex(to_bin(remainder, 32)))))
+                    memory = []
+                if len(memory) == 0:
+                    memory = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1])))
+                else:
+                    memory[2:2] = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1]))[2:])
+        remainder = int("".join(memory), 16)
+        output.append("".join((to_hex(to_bin(remainder, 32)))))
+        return output
+    except Exception as e:
+        if "int()" in str(e):
+            fail_value = str(e).split()[-1]
+            raise ValueError(f"Invalid data: {fail_value}")
+        else:
+            raise ValueError(str(e))
 
 def string_handler(line):
     #Retorna a linha em forma de lista, mas com os caracteres transformados em ascii
     string = " ".join(line[2:])
+    if (string.count("'") <= 0 or string.count("'")%2 != 0) and (string.count('"') <= 0 or string.count('"')%2 != 0):
+        raise ValueError(f".string must have \'\' or \"\"")
     output = []
     output.append(line[0])
     output.append(line[1])
@@ -259,7 +282,7 @@ BEGIN
 """
 
 def create_data_file(data, origin_file):
-    data_file = origin_file[:-4] + "_dat" +".mif"
+    data_file = origin_file[:-4] + "_data" +".mif"
     with open(data_file, "w") as file:
         memory_size = 32768
         file.write(header_mif(memory_size))
@@ -272,7 +295,7 @@ def create_data_file(data, origin_file):
     print(f"{data_file} file created!")
 
 def create_text_file(instructions, origin_file):
-    inst_file = origin_file[:-4] + "_txt" +".mif"
+    inst_file = origin_file[:-4] + "_text" +".mif"
     with open(inst_file, "w") as file:
         memory_size = 16384
         file.write(header_mif(memory_size))
@@ -281,7 +304,16 @@ def create_text_file(instructions, origin_file):
         file.write("END;\n")
     print(f"{inst_file} file created!")
 
+def find_line(content):
+    global file_name
+    with open(file_name, 'r') as file:
+        for line_number, line in enumerate(file, 1):
+            if content in line:
+                return line_number
+        return -1
+
 def main():
+    global file_name
     while True:
         file_name = input("Enter the name of the .asm file (0 to exit): ")
         if file_name == "0":

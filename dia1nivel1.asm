@@ -1,3 +1,7 @@
+.data
+VETOR:    .word 10, 20, 30, 40
+RESULT:    .word 0
+
 .text
 main:
     lui  t0, 65552
