@@ -239,18 +239,22 @@ def data_parser(data):
         output = []
         data = data.splitlines()
         for line in data:
-            line = splitter(line)
-            if line[1] == ".string":
-                line = string_handler(line)
-            for i in range(2, len(line)):
-                if len(memory) > 10-memory_size(line[1]):
-                    remainder = int("".join(memory), 16)
-                    output.append("".join((to_hex(to_bin(remainder, 32)))))
-                    memory = []
-                if len(memory) == 0:
-                    memory = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1])))
-                else:
-                    memory[2:2] = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1]))[2:])
+            if ":" in line:
+                line = line[line.find(":")+1:]
+            if len(line.split()) > 0:
+                line = splitter(line)
+                line.insert(0, "nome")
+                if line[1] == ".string":
+                    line = string_handler(line)
+                for i in range(2, len(line)):
+                    if len(memory) > 10-memory_size(line[1]):
+                        remainder = int("".join(memory), 16)
+                        output.append("".join((to_hex(to_bin(remainder, 32)))))
+                        memory = []
+                    if len(memory) == 0:
+                        memory = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1])))
+                    else:
+                        memory[2:2] = list(to_hex(to_bin(int(line[i],0), memory_size(line[1])*4), memory_size(line[1]))[2:])
         remainder = int("".join(memory), 16)
         output.append("".join((to_hex(to_bin(remainder, 32)))))
         return output
