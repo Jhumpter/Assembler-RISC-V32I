@@ -101,10 +101,10 @@ def i_inst (type, res, arg1, imm):
     if type == "lw" or type == "lhu" or type == "jalr":
         arg1, imm = imm, arg1
         arg1 = reg_translator(arg1)
-        imm = to_bin(int(imm), 12)
+        imm = to_bin(int(imm,0), 12)
     else:
         arg1 = reg_translator(arg1)
-        imm = to_bin(int(imm), 12)
+        imm = to_bin(int(imm,0), 12)
     res = reg_translator(res) 
     if type == "lw":
         return to_hex(imm+arg1+"010"+res+"0000011")
